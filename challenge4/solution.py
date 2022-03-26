@@ -6,44 +6,29 @@
 
 # need sort, normalize, decompose, identity, subtract, getmatrixinverse, multiply
 
-from fractions import Fraction #, gcd
-import math
-from functools import reduce
+from fractions import Fraction
+#uncomment functools for python 2.7.13
+# from functools import reduce
+
 
 def get_lcm(a, b):
     if a > b:
         greater = a
     else:
         greater = b
-
     while True:
         if greater % a == 0 and greater % b == 0:
             lcm = greater
             break
         greater += 1
-
     return lcm
 
+
 def get_lcm_list(l):
-        return reduce(lambda x, y: get_lcm(x, y), l)
+    return reduce(lambda x, y: get_lcm(x, y), l)
 
 
-# def get_lcm_lcd(p):
-#     print(p)
-#     x = []
-#     lcm = get_lcm_list([f.denominator for f in p])
-#     for f in p:
-#         # print(f)
-#         if f.numerator == 0:
-#             x.append(Fraction(0))
-#         elif f.denominator != lcm:
-#             x.append(Fraction(int(lcm/(f.denominator*f.numerator)), lcm))
-#         else:
-#             x.append(Fraction(f.numerator, lcm))
-#     print(x)
-#     return (lcm, x)
-
-
+#number of absorbing states (full zeros)
 def num_abs(m):
     for row in range(len(m)):
         for col in range(len(m[row])):
@@ -51,8 +36,9 @@ def num_abs(m):
                 break
         else:
             return row
+    return 0
 
-
+# returns Q and R matrices
 def get_q_r(m):
     t = num_abs(m)
     Q = []
@@ -63,7 +49,7 @@ def get_q_r(m):
         for col in range(t):
             r.append(m[row][col])
         Q.append(r)
-    
+
     for row in range(t):
         r = []
         for col in range(t, len(m[row])):
@@ -71,6 +57,7 @@ def get_q_r(m):
         R.append(r)
     return Q, R
 
+# returns identity matrix of size t by t
 def identity(t):
     m = []
     for i in range(t):
@@ -80,14 +67,14 @@ def identity(t):
         m.append(r)
     return m
 
-
+# swaps rows in the matrix
 def swap(m, i, j):
     n = []
     size = len(m)
 
     if i == j:
         return m
-    
+
     for row in range(size):
         r = []
         temp_r = m[row]
@@ -106,7 +93,7 @@ def swap(m, i, j):
         n.append(r)
     return n
 
-
+# sorts the matrix so all absorbing states are at the end
 def sort(m):
     size = len(m)
     abs_row = -1
@@ -121,7 +108,6 @@ def sort(m):
     return m
 
 
-
 def subtract(i, q):
     s = []
     for row in range(len(i)):
@@ -130,6 +116,7 @@ def subtract(i, q):
             s_r.append(i[row][col] - q[row][col])
         s.append(s_r)
     return s
+
 
 def multiply(a, b):
     m = []
@@ -144,6 +131,7 @@ def multiply(a, b):
         m.append(m_r)
     return m
 
+
 def normalize(m):
     n = []
     for row in range(len(m)):
@@ -151,7 +139,7 @@ def normalize(m):
         cols = len(m[row])
         for col in range(cols):
             sum += m[row][col]
-    
+
         n_r = []
 
         if sum == 0:
@@ -161,6 +149,7 @@ def normalize(m):
                 n_r.append(Fraction(m[row][col], sum))
         n.append(n_r)
     return n
+
 
 def transpose(m):
     t = []
@@ -174,8 +163,10 @@ def transpose(m):
         t.append(t_r)
     return t
 
+
 def minor(m, x, y):
     return [row[:y] + row[y+1:] for row in (m[:x]+m[x+1:])]
+
 
 def determinant(m):
     if len(m) == 2:
@@ -185,6 +176,7 @@ def determinant(m):
     for col in range(len(m)):
         d += ((-1) ** col) * m[0][col] * determinant(minor(m, 0, col))
     return d
+
 
 def inverse(m):
     d = determinant(m)
@@ -207,6 +199,8 @@ def inverse(m):
     return cof
 
 # Absorbing Probabilities: B = (I - Q)^-1 * R
+
+
 def calc_probabilities(m):
     m = sort(m)
     n = normalize(m)
@@ -218,8 +212,10 @@ def calc_probabilities(m):
     return b
 
 
-
 def solution(m):
+    #if first state is also an absorbing state
+    if num_abs(m) == 0:
+        return [1] + [0]*(num_abs(m)-1) + [1]
     probabilities = calc_probabilities(m)[0]
     lcm = get_lcm_list([p.denominator for p in probabilities])
     sol = []
@@ -229,21 +225,15 @@ def solution(m):
         elif p.denominator == lcm:
             sol.append(p.numerator)
         else:
-            sol.append(int((lcm / p.denominator)*p.numerator))
+            sol.append(int((lcm / float(p.denominator))*p.numerator))
     sol.append(lcm)
     return sol
-    
 
 
-
-
-            
-
-
-
-
-print(solution([[0, 2, 1, 0, 0], [0, 0, 0, 3, 4], [0, 0, 0, 0, 0], [0, 0, 0, 0,0], [0, 0, 0, 0, 0]]))
+print(solution([[0, 2, 1, 0, 0], [0, 0, 0, 3, 4], [
+      0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]))
 # returns [7, 6, 8, 21]
 
-print(solution([[0, 1, 0, 0, 0, 1], [4, 0, 0, 3, 2, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]))
+print(solution([[0, 1, 0, 0, 0, 1], [4, 0, 0, 3, 2, 0], [0, 0, 0, 0, 0, 0], [
+      0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]]))
 # returns [0, 3, 2, 9, 14]
